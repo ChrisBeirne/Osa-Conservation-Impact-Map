@@ -192,11 +192,10 @@ options(googledrive_quiet = TRUE)
 # import spatial data
 
 cams_1 <- st_read("data/Cam Trap Grid 2018.shp")
-
+cams_2 <- st_read("data/Mega_Survey_set_-_Final_March_2020 waypoints.shp")
 kids <- st_read("data/kids club partners.shp")
-oc <- st_read("data/OC Properties 2023.shp")
-
-
+oc <- st_read("data/oc_propertiers_clean.shp")
+oc <- st_zm(oc)
 rest <- st_read("data/restoration partners.shp")
 road <- st_read("data/Road Study 2021.shp")
 road <- road[st_coordinates(road)[,1] < (-80),]
@@ -213,49 +212,21 @@ m <- leaflet() %>%
   addProviderTiles(providers$OpenStreetMap.Mapnik, group="OS") #%>%     
 
  m <- m %>%
-    addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=3,opacity=0.3, radius=1, popup="cameratraps")  %>%
-    addCircleMarkers(data = kids, color = "yellow", group = "kids club", weight=3,opacity=1, radius=1, popup="kids clubs")   %>%
-    addCircleMarkers(data = road, color = "purple", group = "road survey", weight=3,opacity=1, radius=1, popup="road survey")   %>%
-    addCircleMarkers(data = rest, color = "orange", group = "restoration", weight=3,opacity=1, radius=1, popup="restoration")   
+    addPolygons(data = oc, color = "pink", group = "property", weight=3,fillOpacity=1,stroke=F, popup="property") %>%
+    addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
+    addCircleMarkers(data = cams_2, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
+    addCircleMarkers(data = kids, color = "yellow", group = "kids club", weight=1,opacity=1, radius=1, popup="kids clubs")   %>%
+    addCircleMarkers(data = road, color = "purple", group = "road survey", weight=1,opacity=1, radius=1, popup="road survey")   %>%
+    addCircleMarkers(data = rest, color = "orange", group = "restoration", weight=1,opacity=1, radius=1, popup="restoration")    %>% 
+     addLayersControl(
+        baseGroups = c("OS", "Simple", "Satellite"),
+        overlayGroups = c("property","restoration","camera trap","kids club", "road survey", "restoration"),
+        options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+  addFullscreenControl() %>% 
+   addLegend(colors=c("pink", "blue", "yellow", "purple", "orange"), labels=c("property","camera trap","kids club", "road survey", "restoration"), opacity=1)
  
  
- 
- 
-#  %>%
-#     addCircleMarkers(lng=tmp_cr$location_long[tmp_cr$name==ids[i]],
-#                          lat=tmp_cr$location_lat[tmp_cr$name==ids[i]], 
-#                          popup=paste(tmp_cr$timestamp[tmp_cr$name==ids[i]]),
-#                          fillOpacity = 0.3, opacity = 0.5, radius=2, color = tmp_cr_shp$colours[i], group = ids[i], stroke=F) %>%
-#         addCircleMarkers(lng=last(tmp_cr$location_long[tmp_cr$name==ids[i]]),
-#                          lat=last(tmp_cr$location_lat[tmp_cr$name==ids[i]]), 
-#                          popup=paste(last(tmp_cr$timestamp[tmp_cr$name==ids[i]])),
-#                          fillOpacity = 1, opacity = 1, radius=5, color = tmp_cr_shp$colours[i], group = ids[i], stroke=F) %>% 
-#         # Add the last point
-#         addMarkers(lng=last(tmp_cr$location_long[tmp_cr$name==ids[i]]),
-#                          lat=last(tmp_cr$location_lat[tmp_cr$name==ids[i]]), 
-#                          popup=paste(last(tmp_cr$local_identifier[tmp_cr$name==ids[i]]),
-#                                      "<br>Time:",last(tmp_cr$timestamp[tmp_cr$name==ids[i]]),
-#                                      "<br>Long:",last(tmp_cr$location_long[tmp_cr$name==ids[i]]),
-#                                      "<br>Lat:",last(tmp_cr$location_lat[tmp_cr$name==ids[i]])),
-#                    icon = iconSet[tmp_cr$icon[tmp_cr$name==ids[i]][1]], group=ids[i]) #, fillOpacity = 1, opacity = 1, radius=5, color = tmp_cr_shp$colours[i], group = ids[i], stroke=F
-#     }
-# 
-#   m <- m %>%
-#       # Add survey location
-#       addMarkers(lng=cr_locs$longitude,
-#                          lat=cr_locs$latitude, 
-#                          popup=cr_locs$location_code) %>% 
-#       #addLegend(position= "topright", colors=tmp_cr_shp$colours, 
-#        #         labels=names ,opacity = 0.7, title = "Animals") %>%
-#       addScaleBar(position="topleft", 
-#                   options=scaleBarOptions(maxWidth = 100, metric = TRUE, imperial = FALSE, updateWhenIdle = TRUE)) %>%
-#       addLayersControl(
-#         baseGroups = c("OS", "Simple", "Satellite"),
-#         overlayGroups = ids,
-#         options = layersControlOptions(collapsed = FALSE)
-#       ) %>%
-#   addFullscreenControl()
-#   
-# m 
+m
 ```
 
