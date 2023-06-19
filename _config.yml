@@ -1,0 +1,5 @@
+theme: jekyll-theme-dinky
+title: test-bookdown
+markdown: kramdown
+kramdown:
+  parse_block_html: true
