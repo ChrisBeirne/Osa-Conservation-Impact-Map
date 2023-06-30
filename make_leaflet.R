@@ -47,7 +47,7 @@ m <- m %>%
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
   addFullscreenControl() %>% 
-  addLegend(colors=c("pink", "blue", "yellow", "purple", "orange"), labels=c("property","camera trap","kids club", "road survey", "restoration"), opacity=1) %>% 
+  addLegend(colors=c("pink", "blue", "yellow", "purple", "orange"), labels=c("OC property","camera trap","kids club", "road survey", "restoration partners"), opacity=1) %>% 
   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)
 
 m
