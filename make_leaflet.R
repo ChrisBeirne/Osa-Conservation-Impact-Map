@@ -166,7 +166,8 @@ ids <- unique(tmp_cr$name)
 m <- leaflet() %>%
   # Add a satellite image layer
   addProviderTiles(providers$CartoDB.VoyagerNoLabels, 
-                   options = providerTileOptions(minZoom = 10, maxZoom = 13))     
+                   options = providerTileOptions(minZoom = 10, maxZoom = 13)) %>% 
+                   setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10)
 
 m <- m %>%
   addPolygons(data = oc, color = "pink", group = "property", weight=3,fillOpacity=1,stroke=F, popup="property") %>%
