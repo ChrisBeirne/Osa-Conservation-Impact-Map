@@ -4,12 +4,10 @@ on:
   schedule:     
      - cron: "0 3 * * *"  
 
-
-
 jobs:
   import-data:
     name: Render-Map
-    runs-on:   macos-11 # macos-latest # ubuntu-latest #  macos USES 10 TIMES THE MINUTES
+    runs-on:   macos-latest # ubuntu-latest #  macos USES 10 TIMES THE MINUTES
     steps:
       - uses: actions/checkout@v2
       - uses: r-lib/actions/setup-pandoc@v2
@@ -47,8 +45,6 @@ jobs:
         run: Rscript -e "install.packages('geosphere')"
       - name: Install foreach
         run: Rscript -e "install.packages('foreach')"
-      - name: Install maptools
-        run: Rscript -e "install.packages('maptools')"
       - name: Install leaflet.opacity
         run: Rscript -e "install.packages('leaflet.opacity')"
       - name: Install leaflet.opacity

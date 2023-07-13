@@ -13,7 +13,6 @@ library(purrr)
 library(readxl)
 library(geosphere)
 library(foreach)
-library(maptools)
 library(leaflet.opacity)
 library(leaflet.extras)
 library(htmlwidgets)
@@ -69,7 +68,7 @@ mov_dat <- getMovebankData(study=1573471517, login=loginStored,  removeDuplicate
                            timestamp_start=start_t)
 #OCelot
 tmp <- getMovebankData(study=2526574641, login=loginStored,  removeDuplicatedTimestamps=TRUE,
-                       timestamp_start=start_t)
+                       timestamp_start=start_tapir)
 
 #Tapir
 tmp2 <- getMovebankData(study=1954804459, login=loginStored,  removeDuplicatedTimestamps=TRUE,
