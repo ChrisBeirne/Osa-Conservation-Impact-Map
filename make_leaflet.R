@@ -190,6 +190,6 @@ m <- m %>%
   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)
 
 m
-
+ 
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())
