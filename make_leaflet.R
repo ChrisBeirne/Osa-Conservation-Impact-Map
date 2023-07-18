@@ -16,8 +16,10 @@ library(foreach)
 library(leaflet.opacity)
 library(leaflet.extras)
 library(htmlwidgets)
+library("leaflegend")
 
 #options(googledrive_quiet = TRUE)
+
 
 cams_1 <- st_read("data/Cam Trap Grid 2018.shp")
 cams_2 <- st_read("data/Mega_Survey_set_-_Final_March_2020 waypoints.shp")
@@ -27,6 +29,27 @@ oc <- st_zm(oc)
 rest <- st_read("data/restoration partners.shp")
 road <- st_read("data/Road Study 2021.shp")
 road <- road[st_coordinates(road)[,1] < (-80),]
+
+# Corridors
+corridors <- st_read("data/CB_amistosa.shp")
+corridors<- st_transform(corridors, 4326)
+
+corridors2 <- st_read("data/Corredores_Biológicos.shp")
+corridors2<- st_transform(corridors2, 4326)
+
+# PA's
+# Import WPDA protected area and filter to this area
+# tmp <-readRDS("C:/Users/cwbei/Dropbox/GitHubProjects/Osa-Conservation-Connectivity-Project/data/input/WDPA_protected_areas/all_area_pa_shp.RDS") 
+# focal_countries <- st_read("data/focal_countries.shp")
+# cr <- focal_countries[focal_countries$name=="Costa Rica",]
+# cr<- st_make_valid(cr)
+# tmp<- st_make_valid(tmp)
+# tmp <- st_intersection(cr, tmp)
+#st_write(tmp, "data/cr_protected.shp")
+
+pa <- st_read("data/cr_protected.shp")
+np <- pa[pa$DESIG_E=="National Park",] 
+pa <- pa[pa$DESIG_E!="National Park",] 
 
 # Import animal locations
 # Import passcodes
@@ -51,8 +74,8 @@ animals[duplicated(animals)==F,]
 animals <- animals[animals$sensor_type_id==653 & is.na(animals$sensor_type_id)==F,]
 
 # Clean up the name
-animals$animalName <- paste0(sub('\\_.*', '', animals$animalName), "_", sub('\\ .*', '', animals$taxon_canonical_name))
-animals$name <- sub('\\_.*', '', animals$animalName)
+animals$animalName <- paste0(sub('//_.*', '', animals$animalName), "_", sub('// .*', '', animals$taxon_canonical_name))
+animals$name <- sub('//_.*', '', animals$animalName)
 
 # Sort date objects
 animals$timestamp_start <- ymd_hms(animals$timestamp_start)
@@ -98,9 +121,9 @@ dat$timestamp <- with_tz(dat$timestamp, tzone = "America/Costa_Rica")
 dat <- left_join(dat, animals[, c("tag_id", "animalName")])
 # Sort the names out
 
-dat$animalName <- sub('\\_.*', '', dat$animalName)
+dat$animalName <- sub('//_.*', '', dat$animalName)
 # Add in the taxonomic group
-dat$animalName <- paste0(dat$animalName, "_", sub('\\ .*', '', dat$taxon_canonical_name))
+dat$animalName <- paste0(dat$animalName, "_", sub('// .*', '', dat$taxon_canonical_name))
 
 
 
@@ -109,34 +132,34 @@ dat$animalName <- paste0(dat$animalName, "_", sub('\\ .*', '', dat$taxon_canonic
 papa <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/king_small.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 aura <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/turk_small.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 mela <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/yhv_small.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 
 atra <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/bhv_small.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 
 pardalis <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/ocelot.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 bairdii <- makeIcon(
   iconUrl = "https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/tapir.png",
   iconWidth = 19, iconHeight = 20,
-  iconAnchorX = 22, iconAnchorY = 39)
+  iconAnchorX = 10, iconAnchorY = 10)
 
 iconSet <- iconList(aura= aura,
                     papa =papa,
@@ -144,6 +167,13 @@ iconSet <- iconList(aura= aura,
                     atratus = atra,
                     pardalis = pardalis,
                     bairdii = bairdii)
+# Create a legend for the animals
+html_legend <- "<img src='https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/king_small.png'style='width:19px;height:20px; '> King vulture<br/>
+                <img src='https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/turk_small.png'style='width:19px;height:20px; '> Turkey vulture<br/>
+                <img src='https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/bhv_small.png'style='width:19px;height:20px;  '> Black vulture<br/>
+                <img src='https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/ocelot.png'style='width:19px;height:20px;     '> Ocelot<br/>
+                <img src='https://raw.githubusercontent.com/ChrisBeirne/Osa-Conservation-Movement-Ecology-Daily-Report/main/icons/tapir.png'style='width:19px;height:20px;      '> Baird's tapir"
+                
 
 dat$icon <- sub(".*? ", "", dat$taxon_canonical_name)
 
@@ -160,7 +190,7 @@ lastloc <- tmp_cr %>%
   ungroup
 
 ids <- unique(tmp_cr$name)
-
+oc$Name
 
 m <- leaflet() %>%
   # Add a satellite image layer
@@ -169,7 +199,11 @@ m <- leaflet() %>%
                    setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10)
 
 m <- m %>%
-  addPolygons(data = oc, color = "pink", group = "property", weight=3,fillOpacity=1,stroke=F, popup="property") %>%
+  addPolygons(data = np, color = "#236049AA", group = "pa", weight=3,fillOpacity=1,stroke=F, popup=np$NAME_1) %>%
+  addPolygons(data = pa, color = "#23604950", group = "pa", weight=3,fillOpacity=1,stroke=F, popup=pa$NAME_1) %>%
+  addPolygons(data = corridors2, color = "#90604950", group = "corridor", weight=3,fillOpacity=1,stroke=F, popup=corridors2$nombre_cb) %>%
+  addPolygons(data = corridors, color = "#90604950", group = "corridor", weight=3,fillOpacity=1,stroke=F, popup=corridors$Nombre) %>%
+  addPolygons(data = oc, color = "#e60f0f", group = "property", weight=3,fillOpacity=1,stroke=F, popup="property") %>%
   addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
   addCircleMarkers(data = cams_2, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
   addCircleMarkers(data = kids, color = "yellow", group = "kids club", weight=1,opacity=1, radius=1, popup="kids clubs")   %>%
@@ -185,8 +219,11 @@ m <- m %>%
     options = layersControlOptions(collapsed = FALSE)
   ) %>%
   addFullscreenControl() %>% 
-  addLegend(colors=c("pink", "blue", "yellow", "purple", "orange"), labels=c("OC property","camera trap","kids club", "road survey", "restoration partners"), opacity=1) %>% 
-  suspendScroll(hoverToWake = TRUE, wakeTime = 2000)
+  addLegend(colors=c("#e60f0f", "blue", "yellow", "purple", "orange","#236049AA","#23604950", "#90604950"), 
+            labels=c("OC property","camera trap","kids club", "road survey", "restoration partners", "National parks", "Protected areas", "Biological corridors"),
+            opacity=1) %>% 
+  suspendScroll(hoverToWake = TRUE, wakeTime = 2000)  %>%
+  addControl(html = html_legend, position = "topright")
 
 m
  
