@@ -51,6 +51,8 @@ jobs:
         run: Rscript -e "install.packages('leaflet.extras')"
       - name: Install leaflet.extras
         run: Rscript -e "install.packages('htmlwidgets')"
+      - name: Install nngeo
+        run: Rscript -e "install.packages('nngeo')"
       - name: Render Map
         env: 
           GOOGLE_AUTHENTICATION_CREDENTIALS: ${{ secrets.GOOGLE_AUTHENTICATION_CREDENTIALS }}
