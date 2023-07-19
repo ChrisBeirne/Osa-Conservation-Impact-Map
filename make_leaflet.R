@@ -16,7 +16,6 @@ library(foreach)
 library(leaflet.opacity)
 library(leaflet.extras)
 library(htmlwidgets)
-library("leaflegend")
 
 #options(googledrive_quiet = TRUE)
 
