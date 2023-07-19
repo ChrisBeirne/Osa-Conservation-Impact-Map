@@ -28,7 +28,7 @@ oc <- st_zm(oc)
 rest <- st_read("data/restoration partners.shp")
 rest2 <- st_read("data/rest3.shp")
 rest2 <- st_zm(rest2, drop = T, what = "ZM")
-plot(rest2)
+
 road <- st_read("data/Road Study 2021.shp")
 road <- road[st_coordinates(road)[,1] < (-80),]
 
@@ -69,7 +69,7 @@ tmp <- st_combine(test)
 #plot(test)
 tmp <- st_union(test)
 #plot(tmp)
-tmp <- tmp[2]
+tmp <- tmp[st_geometry_type(tmp)=="MULTIPOLYGON"]
 
 tmp2 <- nngeo::st_remove_holes(tmp)
 #plot(tmp2)
@@ -81,7 +81,7 @@ tmp4$area <- st_area(tmp4)
 tmp5 <- tmp4[order(tmp4$area)]
 #plot(tmp5[3])
 aoi <- tmp5[3]
-plot(aoi)
+#plot(aoi)
 aoi <- st_as_sf(aoi)
 # Import animal locations
 # Import passcodes
