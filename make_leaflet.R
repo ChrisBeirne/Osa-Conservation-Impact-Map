@@ -239,7 +239,7 @@ lastloc$common_name[lastloc$taxon_canonical_name=="Tapirus bairdii"] <- "Baird's
 m <- leaflet() %>%
   # Add a satellite image layer
   addProviderTiles(providers$Esri.WorldImagery, 
-                   options = providerTileOptions(minZoom = 10, maxZoom = 13)) %>% 
+                   options = providerTileOptions(minZoom = 9, maxZoom = 13)) %>% 
                    setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
 
 m <- m %>%
