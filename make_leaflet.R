@@ -26,6 +26,9 @@ kids <- st_read("data/kids club partners.shp")
 oc <- st_read("data/oc_propertiers_clean.shp")
 oc <- st_zm(oc)
 rest <- st_read("data/restoration partners.shp")
+rest2 <- st_read("data/rest3.shp")
+rest2 <- st_zm(rest2, drop = T, what = "ZM")
+plot(rest2)
 road <- st_read("data/Road Study 2021.shp")
 road <- road[st_coordinates(road)[,1] < (-80),]
 
@@ -59,12 +62,15 @@ t3<- st_buffer(kids,7000)
 t4<- st_buffer(oc,7000)
 t5<- st_buffer(rest,7000)
 t6<- st_buffer(road,7000)
-
-test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6))
+t7<- st_buffer(rest2,7000)
+t7 <- st_cast(t7, "POLYGON")
+test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6),st_geometry(t7) )
 tmp <- st_combine(test)
 #plot(test)
 tmp <- st_union(test)
 #plot(tmp)
+tmp <- tmp[2]
+
 tmp2 <- nngeo::st_remove_holes(tmp)
 #plot(tmp2)
 tmp2<-st_make_valid(tmp2)
@@ -217,42 +223,63 @@ lastloc <- tmp_cr %>%
 
 ids <- unique(tmp_cr$name)
 
+# Make labels for national parks
+np_labs <- data.frame(labels=paste0(np$NAME_1), x=st_coordinates(st_centroid(np))[,1],y=st_coordinates(st_centroid(np))[,2])
+rest2 <- st_as_sf(rest2)
+# cOMMON NAMES FOR THE ANIMALS
+lastloc$taxon_canonical_name
+lastloc$common_name <- NA
+lastloc$common_name[lastloc$taxon_canonical_name=="Cathartes aura"] <- "Turkey vulture"
+lastloc$common_name[lastloc$taxon_canonical_name=="Coragyps atratus"] <- "Black vulture"
+lastloc$common_name[lastloc$taxon_canonical_name=="Leopardus pardalis"] <- "Ocelot"
+lastloc$common_name[lastloc$taxon_canonical_name=="Sarcoramphus papa"] <- "King vulture"
+lastloc$common_name[lastloc$taxon_canonical_name=="Tapirus bairdii"] <- "Baird's tapir"
 
+#table(lastloc$taxon_canonical_name)
 m <- leaflet() %>%
   # Add a satellite image layer
   addProviderTiles(providers$Esri.WorldImagery, 
                    options = providerTileOptions(minZoom = 10, maxZoom = 13)) %>% 
-                   setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10)
+                   setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
 
 m <- m %>%
-  addPolygons(data = np, color = "#236049AA", group = "National parks", weight=3,fillOpacity=1,stroke=F, popup=np$NAME_1) %>%
-  addPolygons(data = pa, color = "#23604950", group = "Protected areas", weight=3,fillOpacity=1,stroke=F, popup=pa$NAME_1) %>%
-  addPolygons(data = corridors2, color = "#90604950", group = "Biological corridors", weight=3,fillOpacity=1,stroke=F, popup=corridors2$nombre_cb) %>%
-  addPolygons(data = corridors, color = "#90604950", group = "Biological corridors", weight=3,fillOpacity=1,stroke=F, popup=corridors$Nombre) %>%
-  addPolygons(data = oc, color = "#e60f0f", group = "property", weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
-  addPolygons(data = aoi, fill=F, color = "yellow", group = "Osa Conservation's Impact Zone", weight=5,fillOpacity=1,stroke=T) %>%
-  addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices") %>%
-  addCircleMarkers(data = cams_2, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices") %>%
-  addCircleMarkers(data = kids, color = "purple", group = "kids club", weight=1,opacity=1, radius=1, popup="Youth Nature Club Chapters")   %>%
-  addCircleMarkers(data = road, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices")   %>%
-  addCircleMarkers(data = rest, color = "orange", group = "restoration", weight=1,opacity=1, radius=1, popup="Restoration Network Members") %>% 
+  addPolygons(data = np, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=T) %>%
+  addPolygons(data = pa, color = "#d4fa37AA", group = "Protected areas"                      , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = corridors2, color = "#f8cecc50", group = "Biological corridors"         , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = corridors, color = "#f8cecc50", group = "Biological corridors"          , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = oc, color = "#e60f0f", group = "property"                               , weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
+  addPolygons(data = aoi, fill=F, color = "#f29e21", group = "Osa Conservation's Impact Zone", weight=5,opacity=1,stroke=T) %>%
+  addCircleMarkers(data = cams_1, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = cams_2, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = kids, color = "#ec49c9", group = "kids club"                       , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Youth Nature Club Chapters")   %>%
+  addCircleMarkers(data = road, color = "blue", group = "camera trap"                        , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices")   %>%
+  addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
+  addPolygons(data = rest2, color = "#72f9ff", group = "restoration"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
+  # Add centroids to make them visible
+  addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "restoration"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
+  
+    #
   # Add the last location point for each animal
   addMarkers(lng=lastloc$location_long,
              lat=lastloc$location_lat, 
-             popup=paste0(lastloc$local_identifier,"<br>" ,substr(lastloc$timestamp,1,16)),
+             popup=paste0(lastloc$local_identifier,"<br>" ,substr(lastloc$timestamp,1,16), "<br>", lastloc$common_name),
              icon = iconSet[lastloc$icon], group="animals")  %>%
   addFullscreenControl() %>% 
-  addLegend(colors=c("#e60f0f", "blue", "purple", "orange","#236049AA","#23604950", "#90604950", "yellow"), 
+  addLabelOnlyMarkers(data = np_labs,
+                      lng = ~x, lat = ~y, label = ~labels,
+                      labelOptions = labelOptions(noHide = TRUE, direction = 'top', weight = 10)) %>%
+  addLegend(colors=c("#e60f0f", "blue", "#ec49c9", "#72f9ff","#487f16AA","#d4fa37AA", "#f8cecc50", "#f29e21"), 
             labels=c("Osa Conservation Private Wildlife Refuge","Wildlife Monitoring Devices","Youth Nature Club Chapters", "Restoration Network Members", "National parks", "Protected areas", "Biological corridors", "Impact Zone"),
             opacity=1) %>% 
   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)  %>%
-  addControl(html = html_legend, position = "topright")  %>% 
+  #remove animal key to reduce clutter
+  #addControl(html = html_legend, position = "topright")  %>% 
   addLayersControl(
     overlayGroups = c("Osa Conservation's Impact Zone","National parks", "Protected areas", "Biological corridors" ),
     options = layersControlOptions(collapsed = FALSE)
   ) 
 
 m
- ?addPolygons
+
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())
