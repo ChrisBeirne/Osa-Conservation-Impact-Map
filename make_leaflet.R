@@ -50,6 +50,33 @@ pa <- st_read("data/cr_protected.shp")
 np <- pa[pa$DESIG_E=="National Park",] 
 pa <- pa[pa$DESIG_E!="National Park",] 
 
+# Create OSa impact zone
+# All points, buffered and interesected with land area
+
+t1<- st_buffer(cams_1,7000)
+t2<- st_buffer(cams_2,7000)
+t3<- st_buffer(kids,7000)
+t4<- st_buffer(oc,7000)
+t5<- st_buffer(rest,7000)
+t6<- st_buffer(road,7000)
+
+test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6))
+tmp <- st_combine(test)
+#plot(test)
+tmp <- st_union(test)
+#plot(tmp)
+tmp2 <- nngeo::st_remove_holes(tmp)
+#plot(tmp2)
+tmp2<-st_make_valid(tmp2)
+tmp3 <- st_simplify(tmp2, dTolerance = 2000)
+#plot(tmp3)
+tmp4<- st_cast(tmp3, "POLYGON")
+tmp4$area <- st_area(tmp4)
+tmp5 <- tmp4[order(tmp4$area)]
+#plot(tmp5[3])
+aoi <- tmp5[3]
+plot(aoi)
+aoi <- st_as_sf(aoi)
 # Import animal locations
 # Import passcodes
 MOVE_PASS <- Sys.getenv("MOVEBANK_PASSWORD")
@@ -189,42 +216,43 @@ lastloc <- tmp_cr %>%
   ungroup
 
 ids <- unique(tmp_cr$name)
-oc$Name
+
 
 m <- leaflet() %>%
   # Add a satellite image layer
-  addProviderTiles(providers$CartoDB.VoyagerNoLabels, 
+  addProviderTiles(providers$Esri.WorldImagery, 
                    options = providerTileOptions(minZoom = 10, maxZoom = 13)) %>% 
                    setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10)
 
 m <- m %>%
-  addPolygons(data = np, color = "#236049AA", group = "pa", weight=3,fillOpacity=1,stroke=F, popup=np$NAME_1) %>%
-  addPolygons(data = pa, color = "#23604950", group = "pa", weight=3,fillOpacity=1,stroke=F, popup=pa$NAME_1) %>%
-  addPolygons(data = corridors2, color = "#90604950", group = "corridor", weight=3,fillOpacity=1,stroke=F, popup=corridors2$nombre_cb) %>%
-  addPolygons(data = corridors, color = "#90604950", group = "corridor", weight=3,fillOpacity=1,stroke=F, popup=corridors$Nombre) %>%
-  addPolygons(data = oc, color = "#e60f0f", group = "property", weight=3,fillOpacity=1,stroke=F, popup="property") %>%
-  addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
-  addCircleMarkers(data = cams_2, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="cameratraps") %>%
-  addCircleMarkers(data = kids, color = "yellow", group = "kids club", weight=1,opacity=1, radius=1, popup="kids clubs")   %>%
-  addCircleMarkers(data = road, color = "purple", group = "road survey", weight=1,opacity=1, radius=1, popup="road survey")   %>%
-  addCircleMarkers(data = rest, color = "orange", group = "restoration", weight=1,opacity=1, radius=1, popup="restoration") %>% 
+  addPolygons(data = np, color = "#236049AA", group = "National parks", weight=3,fillOpacity=1,stroke=F, popup=np$NAME_1) %>%
+  addPolygons(data = pa, color = "#23604950", group = "Protected areas", weight=3,fillOpacity=1,stroke=F, popup=pa$NAME_1) %>%
+  addPolygons(data = corridors2, color = "#90604950", group = "Biological corridors", weight=3,fillOpacity=1,stroke=F, popup=corridors2$nombre_cb) %>%
+  addPolygons(data = corridors, color = "#90604950", group = "Biological corridors", weight=3,fillOpacity=1,stroke=F, popup=corridors$Nombre) %>%
+  addPolygons(data = oc, color = "#e60f0f", group = "property", weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
+  addPolygons(data = aoi, fill=F, color = "yellow", group = "Osa Conservation's Impact Zone", weight=5,fillOpacity=1,stroke=T) %>%
+  addCircleMarkers(data = cams_1, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = cams_2, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = kids, color = "purple", group = "kids club", weight=1,opacity=1, radius=1, popup="Youth Nature Club Chapters")   %>%
+  addCircleMarkers(data = road, color = "blue", group = "camera trap", weight=1,opacity=1, radius=1, popup="Wildlife Monitoring Devices")   %>%
+  addCircleMarkers(data = rest, color = "orange", group = "restoration", weight=1,opacity=1, radius=1, popup="Restoration Network Members") %>% 
   # Add the last location point for each animal
   addMarkers(lng=lastloc$location_long,
              lat=lastloc$location_lat, 
-             popup=lastloc$local_identifier,
-             icon = iconSet[lastloc$icon], group="animals")   %>% 
-  addLayersControl(
-    overlayGroups = c("property","restoration","camera trap","kids club", "road survey", "restoration", "animals"),
-    options = layersControlOptions(collapsed = FALSE)
-  ) %>%
+             popup=paste0(lastloc$local_identifier,"<br>" ,substr(lastloc$timestamp,1,16)),
+             icon = iconSet[lastloc$icon], group="animals")  %>%
   addFullscreenControl() %>% 
-  addLegend(colors=c("#e60f0f", "blue", "yellow", "purple", "orange","#236049AA","#23604950", "#90604950"), 
-            labels=c("OC property","camera trap","kids club", "road survey", "restoration partners", "National parks", "Protected areas", "Biological corridors"),
+  addLegend(colors=c("#e60f0f", "blue", "purple", "orange","#236049AA","#23604950", "#90604950", "yellow"), 
+            labels=c("Osa Conservation Private Wildlife Refuge","Wildlife Monitoring Devices","Youth Nature Club Chapters", "Restoration Network Members", "National parks", "Protected areas", "Biological corridors", "Impact Zone"),
             opacity=1) %>% 
   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)  %>%
-  addControl(html = html_legend, position = "topright")
+  addControl(html = html_legend, position = "topright")  %>% 
+  addLayersControl(
+    overlayGroups = c("Osa Conservation's Impact Zone","National parks", "Protected areas", "Biological corridors" ),
+    options = layersControlOptions(collapsed = FALSE)
+  ) 
 
 m
- 
+ ?addPolygons
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())
