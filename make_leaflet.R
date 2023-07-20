@@ -18,8 +18,17 @@ library(leaflet.extras)
 library(htmlwidgets)
 
 #options(googledrive_quiet = TRUE)
+zone <- data.frame(lon= c(-82.70765465758336, -84.00351630486277),
+                   lat= c(7.893950842276212,  9.44561248318058))
+      
 
-
+zone <- zone %>% 
+          st_as_sf(coords = c("lon", "lat"), 
+                   crs = 4326) %>% 
+          st_bbox() %>% 
+          st_as_sfc()        
+        
+      
 cams_1 <- st_read("data/Cam Trap Grid 2018.shp")
 cams_2 <- st_read("data/Mega_Survey_set_-_Final_March_2020 waypoints.shp")
 kids <- st_read("data/kids club partners.shp")
@@ -39,19 +48,38 @@ corridors<- st_transform(corridors, 4326)
 corridors2 <- st_read("data/Corredores_Biológicos.shp")
 corridors2<- st_transform(corridors2, 4326)
 
+# Create other elements
+plant <- data.frame(x=c(-83.34874,-83.295492), y=c(8.410424,8.764304))
+plant <- st_as_sf(plant, coords = c("x", "y"), crs = 4326)
+
+arboreal <- read.csv("data/arboreal_bridges_csv.csv", header=T)
+arboreal <- st_as_sf(arboreal, coords = c("x", "y"), crs = 4326)
+
+hatchery <- data.frame(x=c(-83.334338), y=c(8.393745))
+hatchery <- st_as_sf(hatchery, coords = c("x", "y"), crs = 4326)
+
+
 # PA's
 # Import WPDA protected area and filter to this area
 # tmp <-readRDS("C:/Users/cwbei/Dropbox/GitHubProjects/Osa-Conservation-Connectivity-Project/data/input/WDPA_protected_areas/all_area_pa_shp.RDS") 
-# focal_countries <- st_read("data/focal_countries.shp")
-# cr <- focal_countries[focal_countries$name=="Costa Rica",]
+ focal_countries <- st_read("data/focal_countries.shp")
+
+# cr <- st_crop(focal_countries, zone)
 # cr<- st_make_valid(cr)
 # tmp<- st_make_valid(tmp)
 # tmp <- st_intersection(cr, tmp)
-#st_write(tmp, "data/cr_protected.shp")
+# st_write(tmp, "data/cr_protected.shp", append=F)
 
 pa <- st_read("data/cr_protected.shp")
 np <- pa[pa$DESIG_E=="National Park",] 
 pa <- pa[pa$DESIG_E!="National Park",] 
+
+# Clean up the national park file
+np_labels <- np[np$NAME_1 %in% c("Corcovado", "Piedras Blancas"),]
+np_labels <- rbind(np_labels, np[np$NAME_1=="Internacional La Amistad",][2,])
+tmp <- np[np$NAME_1=="Internacional La Amistad",][1,]
+np<- np[!(np$NAME_1 %in% np_labels$NAME_1),]
+np <- rbind(np, tmp)
 
 # Create OSa impact zone
 # All points, buffered and interesected with land area
@@ -64,7 +92,9 @@ t5<- st_buffer(rest,7000)
 t6<- st_buffer(road,7000)
 t7<- st_buffer(rest2,7000)
 t7 <- st_cast(t7, "POLYGON")
-test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6),st_geometry(t7) )
+t8<- st_buffer(plant,7000)
+t9<- st_buffer(arboreal,7000)
+test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6),st_geometry(t7),st_geometry(t8),st_geometry(t9) )
 tmp <- st_combine(test)
 #plot(test)
 tmp <- st_union(test)
@@ -83,6 +113,14 @@ tmp5 <- tmp4[order(tmp4$area)]
 aoi <- tmp5[3]
 #plot(aoi)
 aoi <- st_as_sf(aoi)
+
+
+# Crop relevant files to the zone
+corridors2<- st_make_valid(corridors2)
+corridors2 <- st_crop(corridors2, zone)
+
+
+
 # Import animal locations
 # Import passcodes
 MOVE_PASS <- Sys.getenv("MOVEBANK_PASSWORD")
@@ -224,7 +262,12 @@ lastloc <- tmp_cr %>%
 ids <- unique(tmp_cr$name)
 
 # Make labels for national parks
-np_labs <- data.frame(labels=paste0(np$NAME_1), x=st_coordinates(st_centroid(np))[,1],y=st_coordinates(st_centroid(np))[,2])
+np_labs <- data.frame(labels=paste0(np_labels$NAME_1), x=st_coordinates(st_centroid(np_labels))[,1],y=st_coordinates(st_centroid(np_labels))[,2])
+np_labs$labels[np_labs$labels=="Internacional La Amistad"] <- "Parque Internacional La Amistad"
+np_labs$labels[np_labs$labels=="Corcovado"] <- "Corcovado National Park"
+np_labs$labels[np_labs$labels=="Piedras Blancas"] <- "Piedras Blancas National Park"
+
+
 rest2 <- st_as_sf(rest2)
 # cOMMON NAMES FOR THE ANIMALS
 lastloc$taxon_canonical_name
@@ -243,18 +286,24 @@ m <- leaflet() %>%
                    setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
 
 m <- m %>%
-  addPolygons(data = np, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=T) %>%
+  addPolygons(data = np_labels, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = np, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
   addPolygons(data = pa, color = "#d4fa37AA", group = "Protected areas"                      , weight=3,fillOpacity=1,stroke=F) %>%
   addPolygons(data = corridors2, color = "#f8cecc50", group = "Biological corridors"         , weight=3,fillOpacity=1,stroke=F) %>%
   addPolygons(data = corridors, color = "#f8cecc50", group = "Biological corridors"          , weight=3,fillOpacity=1,stroke=F) %>%
   addPolygons(data = oc, color = "#e60f0f", group = "property"                               , weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
   addPolygons(data = aoi, fill=F, color = "#f29e21", group = "Osa Conservation's Impact Zone", weight=5,opacity=1,stroke=T) %>%
+  addPolygons(data = zone, fill=F, color = "black", weight=3,opacity=1,stroke=T) %>%
+  addPolygons(data = rest2, color = "#72f9ff", group = "restoration"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
   addCircleMarkers(data = cams_1, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
   addCircleMarkers(data = cams_2, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
   addCircleMarkers(data = kids, color = "#ec49c9", group = "kids club"                       , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Youth Nature Club Chapters")   %>%
   addCircleMarkers(data = road, color = "blue", group = "camera trap"                        , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices")   %>%
   addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
-  addPolygons(data = rest2, color = "#72f9ff", group = "restoration"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
+  addCircleMarkers(data = plant, color = "#707070", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Native Tree Nursery") %>% 
+  addCircleMarkers(data = hatchery, color = "#ad3dfb", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Protective Sea Turtle Hatchery") %>% 
+  addCircleMarkers(data = arboreal, color = "#519eea", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Treetop Bridges") %>% 
+  addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
   # Add centroids to make them visible
   addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "restoration"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
   
@@ -267,9 +316,10 @@ m <- m %>%
   addFullscreenControl() %>% 
   addLabelOnlyMarkers(data = np_labs,
                       lng = ~x, lat = ~y, label = ~labels,
-                      labelOptions = labelOptions(noHide = TRUE, direction = 'top', weight = 10)) %>%
-  addLegend(colors=c("#e60f0f", "blue", "#ec49c9", "#72f9ff","#487f16AA","#d4fa37AA", "#f8cecc50", "#f29e21"), 
-            labels=c("Osa Conservation Private Wildlife Refuge","Wildlife Monitoring Devices","Youth Nature Club Chapters", "Restoration Network Members", "National parks", "Protected areas", "Biological corridors", "Impact Zone"),
+                      labelOptions = labelOptions(noHide = TRUE, direction = 'top', weight = 10,opacity=0.8,)) %>%
+  addLegend(colors=c("#e60f0f", "blue", "#ec49c9", "#72f9ff","#ad3dfb", "#519eea", "#707070" ,"#487f16AA","#d4fa37AA", "#f8cecc50", "#f29e21"), 
+            labels=c("Osa Conservation Private Wildlife Refuge","Wildlife Monitoring Devices","Youth Nature Club Chapters", "Restoration Network Sites/Members", "Protective Sea Turtle Hatchery","Treetop Bridges","Native Tree Nurseries", 
+                     "National Parks", "Protected areas", "Biological corridors", "Impact Zone"),
             opacity=1) %>% 
   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)  %>%
   #remove animal key to reduce clutter
@@ -283,3 +333,4 @@ m
 
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())
+?addLabelOnlyMarkers
