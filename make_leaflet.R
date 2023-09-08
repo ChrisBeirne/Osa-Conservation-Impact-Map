@@ -13,7 +13,7 @@ library(purrr)
 library(readxl)
 library(geosphere)
 library(foreach)
-library(leaflet.opacity)
+#library(leaflet.opacity)
 library(leaflet.extras)
 library(htmlwidgets)
 
@@ -278,12 +278,68 @@ lastloc$common_name[lastloc$taxon_canonical_name=="Leopardus pardalis"] <- "Ocel
 lastloc$common_name[lastloc$taxon_canonical_name=="Sarcoramphus papa"] <- "King vulture"
 lastloc$common_name[lastloc$taxon_canonical_name=="Tapirus bairdii"] <- "Baird's tapir"
 
+#V1
+
+# #table(lastloc$taxon_canonical_name)
+# m <- leaflet() %>%
+#   # Add a satellite image layer
+#   addProviderTiles(providers$Esri.WorldImagery, 
+#                    options = providerTileOptions(minZoom = 9, maxZoom = 13)) %>% 
+#                    setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
+# 
+# m <- m %>%
+#   addPolygons(data = np_labels, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
+#   addPolygons(data = np, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
+#   addPolygons(data = pa, color = "#d4fa37AA", group = "Protected areas"                      , weight=3,fillOpacity=1,stroke=F) %>%
+#   addPolygons(data = corridors2, color = "#f8cecc50", group = "Biological corridors"         , weight=3,fillOpacity=1,stroke=F) %>%
+#   addPolygons(data = corridors, color = "#f8cecc50", group = "Biological corridors"          , weight=3,fillOpacity=1,stroke=F) %>%
+#   addPolygons(data = oc, color = "#e60f0f", group = "property"                               , weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
+#   addPolygons(data = aoi, fill=F, color = "#f29e21", group = "Osa Conservation's Impact Zone", weight=5,opacity=1,stroke=T) %>%
+#   addPolygons(data = zone, fill=F, color = "black", weight=3,opacity=1,stroke=T) %>%
+#   addPolygons(data = rest2, color = "#72f9ff", group = "restoration"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
+#   addCircleMarkers(data = cams_1, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+#   addCircleMarkers(data = cams_2, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+#   addCircleMarkers(data = kids, color = "#ec49c9", group = "kids club"                       , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Youth Nature Club Chapters")   %>%
+#   addCircleMarkers(data = road, color = "blue", group = "camera trap"                        , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices")   %>%
+#   addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
+#   addCircleMarkers(data = plant, color = "#707070", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Native Tree Nursery") %>% 
+#   addCircleMarkers(data = hatchery, color = "#ad3dfb", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Protective Sea Turtle Hatchery") %>% 
+#   addCircleMarkers(data = arboreal, color = "#519eea", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Treetop Bridges") %>% 
+#   addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
+#   # Add centroids to make them visible
+#   addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "restoration"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
+#   
+#     #
+#   # Add the last location point for each animal
+#   addMarkers(lng=lastloc$location_long,
+#              lat=lastloc$location_lat, 
+#              popup=paste0(lastloc$local_identifier,"<br>" ,substr(lastloc$timestamp,1,16), "<br>", lastloc$common_name),
+#              icon = iconSet[lastloc$icon], group="animals")  %>%
+#   addFullscreenControl() %>% 
+#   addLabelOnlyMarkers(data = np_labs,
+#                       lng = ~x, lat = ~y, label = ~labels,
+#                       labelOptions = labelOptions(noHide = TRUE, direction = 'top', weight = 10,opacity=0.8,)) %>%
+#   addLegend(colors=c("#e60f0f", "blue", "#ec49c9", "#72f9ff","#ad3dfb", "#519eea", "#707070" ,"#487f16AA","#d4fa37AA", "#f8cecc50", "#f29e21"), 
+#             labels=c("Osa Conservation Private Wildlife Refuge","Wildlife Monitoring Devices","Youth Nature Club Chapters", "Restoration Network Sites/Members", "Protective Sea Turtle Hatchery","Treetop Bridges","Native Tree Nurseries", 
+#                      "National Parks", "Protected areas", "Biological corridors", "Impact Zone"),
+#             opacity=1) %>% 
+#   suspendScroll(hoverToWake = TRUE, wakeTime = 2000)  %>%
+#   #remove animal key to reduce clutter
+#   #addControl(html = html_legend, position = "topright")  %>% 
+#   addLayersControl(
+#     overlayGroups = c("Osa Conservation's Impact Zone","National parks", "Protected areas", "Biological corridors" ),
+#     options = layersControlOptions(collapsed = FALSE)
+#   ) 
+# 
+# m
+
+# V2
 #table(lastloc$taxon_canonical_name)
 m <- leaflet() %>%
   # Add a satellite image layer
   addProviderTiles(providers$Esri.WorldImagery, 
                    options = providerTileOptions(minZoom = 9, maxZoom = 13)) %>% 
-                   setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
+  setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
 
 m <- m %>%
   addPolygons(data = np_labels, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
@@ -307,7 +363,7 @@ m <- m %>%
   # Add centroids to make them visible
   addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "restoration"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
   
-    #
+  #
   # Add the last location point for each animal
   addMarkers(lng=lastloc$location_long,
              lat=lastloc$location_lat, 
@@ -330,6 +386,7 @@ m <- m %>%
   ) 
 
 m
+
 
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())

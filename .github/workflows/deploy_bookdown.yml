@@ -45,11 +45,9 @@ jobs:
         run: Rscript -e "install.packages('geosphere')"
       - name: Install foreach
         run: Rscript -e "install.packages('foreach')"
-      - name: Install leaflet.opacity
-        run: Rscript -e "install.packages('leaflet.opacity')"
-      - name: Install leaflet.opacity
-        run: Rscript -e "install.packages('leaflet.extras')"
       - name: Install leaflet.extras
+        run: Rscript -e "install.packages('leaflet.extras')"
+      - name: Install html.widgets
         run: Rscript -e "install.packages('htmlwidgets')"
       - name: Install nngeo
         run: Rscript -e "install.packages('nngeo')"
