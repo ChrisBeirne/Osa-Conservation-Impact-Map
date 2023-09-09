@@ -160,8 +160,7 @@ start_tapir <- t-as.difftime(48,units='days')
 mov_dat <- getMovebankData(study=1573471517, login=loginStored,  removeDuplicatedTimestamps=TRUE,
                            timestamp_start=start_t)
 #OCelot
-tmp <- getMovebankData(study=2526574641, login=loginStored,  removeDuplicatedTimestamps=TRUE,
-                       timestamp_start=start_tapir)
+tmp <- getMovebankData(study=2526574641, login=loginStored,  removeDuplicatedTimestamps=TRUE)
 
 #Tapir
 tmp2 <- getMovebankData(study=1954804459, login=loginStored,  removeDuplicatedTimestamps=TRUE,
