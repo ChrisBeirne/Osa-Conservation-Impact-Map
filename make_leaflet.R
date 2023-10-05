@@ -81,6 +81,9 @@ tmp <- np[np$NAME_1=="Internacional La Amistad",][1,]
 np<- np[!(np$NAME_1 %in% np_labels$NAME_1),]
 np <- rbind(np, tmp)
 
+# Pull terraba del sierpe
+ts <- pa[pa$ORIG_NA=="Terraba-Sierpe",]
+
 # Create OSa impact zone
 # All points, buffered and interesected with land area
 
@@ -94,7 +97,9 @@ t7<- st_buffer(rest2,7000)
 t7 <- st_cast(t7, "POLYGON")
 t8<- st_buffer(plant,7000)
 t9<- st_buffer(arboreal,7000)
-test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6),st_geometry(t7),st_geometry(t8),st_geometry(t9) )
+t10<- st_buffer(ts,500)
+
+test<- c(st_geometry(t1), st_geometry(t2), st_geometry(t3), st_geometry(t4), st_geometry(t5), st_geometry(t6),st_geometry(t7),st_geometry(t8),st_geometry(t9),st_geometry(t10)  )
 tmp <- st_combine(test)
 #plot(test)
 tmp <- st_union(test)
@@ -104,13 +109,19 @@ tmp <- tmp[st_geometry_type(tmp)=="MULTIPOLYGON"]
 tmp2 <- nngeo::st_remove_holes(tmp)
 #plot(tmp2)
 tmp2<-st_make_valid(tmp2)
-tmp3 <- st_simplify(tmp2, dTolerance = 2000)
+tmp3 <- st_simplify(tmp2, dTolerance = 50, preserveTopology = TRUE)
 #plot(tmp3)
 tmp4<- st_cast(tmp3, "POLYGON")
 tmp4$area <- st_area(tmp4)
 tmp5 <- tmp4[order(tmp4$area)]
-#plot(tmp5[3])
-aoi <- tmp5[3]
+# Smooth it out
+test <- st_buffer(tmp5[3], 1000)
+
+library(smoothr)
+test <- smooth(test, method = "ksmooth", smoothness = 12)
+#plot(test)
+#plot(tmp5[3], add=T)
+aoi <- test
 #plot(aoi)
 aoi <- st_as_sf(aoi)
 
@@ -341,33 +352,33 @@ m <- leaflet() %>%
   setView(lng=-83.26358816666858, lat=8.708281742832918, zoom = 10) 
 
 m <- m %>%
-  addPolygons(data = np_labels, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
-  addPolygons(data = np, color = "#487f16AA", group = "National parks"                       , weight=3,fillOpacity=1,stroke=F) %>%
-  addPolygons(data = pa, color = "#d4fa37AA", group = "Protected areas"                      , weight=3,fillOpacity=1,stroke=F) %>%
-  addPolygons(data = corridors2, color = "#f8cecc50", group = "Biological corridors"         , weight=3,fillOpacity=1,stroke=F) %>%
-  addPolygons(data = corridors, color = "#f8cecc50", group = "Biological corridors"          , weight=3,fillOpacity=1,stroke=F) %>%
-  addPolygons(data = oc, color = "#e60f0f", group = "property"                               , weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
+  addPolygons(data = np_labels, color = "#487f16AA", group = "Protected areas and corridors"                       , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = np, color = "#487f16AA", group = "Protected areas and corridors"                       , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = pa, color = "#d4fa37AA", group = "Protected areas and corridors"                      , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = corridors2, color = "#f8cecc50", group = "Protected areas and corridors"         , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = corridors, color = "#f8cecc50", group = "Protected areas and corridors"          , weight=3,fillOpacity=1,stroke=F) %>%
+  addPolygons(data = oc, color = "#e60f0f", group = "Osa Conservation Private Wildlife Refuge"                               , weight=3,fillOpacity=1,stroke=F, popup="Osa Conservation Private Wildlife Refuge") %>%
   addPolygons(data = aoi, fill=F, color = "#f29e21", group = "Osa Conservation's Impact Zone", weight=5,opacity=1,stroke=T) %>%
   addPolygons(data = zone, fill=F, color = "black", weight=3,opacity=1,stroke=T) %>%
-  addPolygons(data = rest2, color = "#72f9ff", group = "restoration"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
-  addCircleMarkers(data = cams_1, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
-  addCircleMarkers(data = cams_2, color = "blue", group = "camera trap"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
-  addCircleMarkers(data = kids, color = "#ec49c9", group = "kids club"                       , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Youth Nature Club Chapters")   %>%
-  addCircleMarkers(data = road, color = "blue", group = "camera trap"                        , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices")   %>%
-  addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
-  addCircleMarkers(data = plant, color = "#707070", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Native Tree Nursery") %>% 
-  addCircleMarkers(data = hatchery, color = "#ad3dfb", group = "restoration"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Protective Sea Turtle Hatchery") %>% 
-  addCircleMarkers(data = arboreal, color = "#519eea", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Treetop Bridges") %>% 
-  addCircleMarkers(data = rest, color = "#72f9ff", group = "restoration"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
+  addPolygons(data = rest2, color = "#72f9ff", group = "Restoration Network Sites/Members"                         , weight=1,fillOpacity=1,stroke=F, popup="Restoration Network Members") %>% 
+  addCircleMarkers(data = cams_1, color = "blue", group = "Wildlife Monitoring Devices"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = cams_2, color = "blue", group = "Wildlife Monitoring Devices"                      , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices") %>%
+  addCircleMarkers(data = kids, color = "#ec49c9", group = "Youth Nature Club Chapters"                       , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Youth Nature Club Chapters")   %>%
+  addCircleMarkers(data = road, color = "blue", group = "Wildlife Monitoring Devices"                        , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Wildlife Monitoring Devices")   %>%
+  addCircleMarkers(data = rest, color = "#72f9ff", group = "Restoration Network Sites/Members"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
+  addCircleMarkers(data = plant, color = "#707070", group = "Native Tree Nurseries"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Native Tree Nursery") %>% 
+  addCircleMarkers(data = hatchery, color = "#ad3dfb", group = "Protective Sea Turtle Hatchery"                     , weight=1,fillOpacity=1, radius=6,stroke=F, popup="Protective Sea Turtle Hatchery") %>% 
+  addCircleMarkers(data = arboreal, color = "#519eea", group = "Treetop Bridges"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Treetop Bridges") %>% 
+  addCircleMarkers(data = rest, color = "#72f9ff", group = "Restoration Network Sites/Members"                     , weight=1,fillOpacity=1, radius=2,stroke=F, popup="Restoration Network Members") %>% 
   # Add centroids to make them visible
-  addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "restoration"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
+  addCircleMarkers(data = st_centroid(rest2), color = "#72f9ff", group = "Restoration Network Sites/Members"       , weight=1,fillOpacity=1,radius=2, stroke=F,popup="Restoration Network Members") %>% 
   
   #
   # Add the last location point for each animal
   addMarkers(lng=lastloc$location_long,
              lat=lastloc$location_lat, 
              popup=paste0(lastloc$local_identifier,"<br>" ,substr(lastloc$timestamp,1,16), "<br>", lastloc$common_name),
-             icon = iconSet[lastloc$icon], group="animals")  %>%
+             icon = iconSet[lastloc$icon], group="Tracked animals")  %>%
   addFullscreenControl() %>% 
   addLabelOnlyMarkers(data = np_labs,
                       lng = ~x, lat = ~y, label = ~labels,
@@ -380,7 +391,8 @@ m <- m %>%
   #remove animal key to reduce clutter
   #addControl(html = html_legend, position = "topright")  %>% 
   addLayersControl(
-    overlayGroups = c("Osa Conservation's Impact Zone","National parks", "Protected areas", "Biological corridors" ),
+    overlayGroups = c("Protected areas and corridors", "Osa Conservation Private Wildlife Refuge", "Tracked animals",
+                      "Wildlife Monitoring Devices", "Protective Sea Turtle Hatchery", "Youth Nature Club Chapters","Restoration Network Sites/Members", "Treetop Bridges", "Native Tree Nurseries"),
     options = layersControlOptions(collapsed = FALSE)
   ) 
 
