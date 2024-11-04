@@ -16,8 +16,7 @@ library(foreach)
 #library(leaflet.opacity)
 library(leaflet.extras)
 library(htmlwidgets)
-
-#options(googledrive_quiet = TRUE)
+library(smoothr)
 zone <- data.frame(lon= c(-82.70765465758336, -84.00351630486277),
                    lat= c(7.893950842276212,  9.44561248318058))
       
@@ -117,13 +116,15 @@ tmp5 <- tmp4[order(tmp4$area)]
 # Smooth it out
 test <- st_buffer(tmp5[3], 1000)
 
-library(smoothr)
-test <- smooth(test, method = "ksmooth", smoothness = 12)
+
+test <- smoothr::smooth(test, method = "ksmooth", smoothness = 12)
 #plot(test)
 #plot(tmp5[3], add=T)
 aoi <- test
 #plot(aoi)
 aoi <- st_as_sf(aoi)
+
+#st_write(aoi, "Website_impact_map_aoi.shp")
 
 
 # Crop relevant files to the zone
@@ -174,13 +175,13 @@ mov_dat <- getMovebankData(study=1573471517, login=loginStored,  removeDuplicate
 tmp <- getMovebankData(study=2526574641, login=loginStored,  removeDuplicatedTimestamps=TRUE)
 
 #Tapir
-tmp2 <- getMovebankData(study=1954804459, login=loginStored,  removeDuplicatedTimestamps=TRUE,
-                        timestamp_start=start_tapir)
+#tmp2 <- getMovebankData(study=1954804459, login=loginStored,  removeDuplicatedTimestamps=TRUE,
+#                        timestamp_start=start_tapir)
 
 # Remove the obvious outlier
-tmp2 <- tmp2[tmp2$location_lat>8,]
+#tmp2 <- tmp2[tmp2$location_lat>8,]
 
-mov_dat <- moveStack(mov_dat, tmp, tmp2)
+mov_dat <- moveStack(mov_dat, tmp)
 
 
 
