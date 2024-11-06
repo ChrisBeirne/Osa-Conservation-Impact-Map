@@ -146,9 +146,9 @@ loginStored <- movebankLogin(username=MOVE_USE,
 animals <-getMovebankAnimals(study=1573471517,login=loginStored)
 # Ocelot
 tmp <-getMovebankAnimals(study=2526574641,login=loginStored)
-# Tapir
-tmp2 <- getMovebankAnimals(study=1954804459,login=loginStored)
-animals <- rbind(animals, tmp,tmp2)
+# Tapir - DEACTIVATED
+# tmp2 <- getMovebankAnimals(study=1954804459,login=loginStored)
+animals <- rbind(animals, tmp)#,tmp2)
 
 # For some reason they are duplicated
 animals[duplicated(animals)==F,]
@@ -197,12 +197,9 @@ dat <- as.data.frame(mov_dat)
 
 # Convert dat to costa rica time
 dat$timestamp <- with_tz(dat$timestamp, tzone = "America/Costa_Rica")
-
-# Add the location data
-dat <- left_join(dat, animals[, c("tag_id", "animalName")])
 # Sort the names out
 
-dat$animalName <- sub('//_.*', '', dat$animalName)
+dat$animalName <- dat$local_identifier
 # Add in the taxonomic group
 dat$animalName <- paste0(dat$animalName, "_", sub('// .*', '', dat$taxon_canonical_name))
 
@@ -402,4 +399,3 @@ m
 
 saveWidget(m, "index.html" , selfcontained = TRUE, libdir = NULL,
            background = "white", knitrOptions = list())
-?addLabelOnlyMarkers
