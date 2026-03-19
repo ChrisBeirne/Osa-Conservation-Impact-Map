@@ -8,6 +8,8 @@ jobs:
   import-data:
     name: Render-Map
     runs-on:   macos-latest # ubuntu-latest #  macos USES 10 TIMES THE MINUTES
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - uses: r-lib/actions/setup-pandoc@v2
