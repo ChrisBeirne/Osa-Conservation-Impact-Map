@@ -23,6 +23,8 @@ jobs:
         run: Rscript -e "install.packages('leaflet')"
       - name: Install move
         run: Rscript -e "install.packages('move')"
+      - name: Install remotes
+        run: Rscript -e "install.packages('remotes')"        
       - name: Install dplyr
         run: Rscript -e "install.packages('dplyr')"
       - name: Install sf
@@ -46,7 +48,7 @@ jobs:
       - name: Install foreach
         run: Rscript -e "install.packages('foreach')"
       - name: Install leaflet.extras
-        run: Rscript -e "install.packages('leaflet.extras')"
+        run: Rscript -e "remotes::install_github('bhaskarvk/leaflet.extras')"
       - name: Install html.widgets
         run: Rscript -e "install.packages('htmlwidgets')"
       - name: Install nngeo
